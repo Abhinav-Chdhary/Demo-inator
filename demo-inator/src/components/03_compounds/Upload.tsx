@@ -1,4 +1,4 @@
-// src/components/Upload.tsx
+// src/components/03_compounds/Upload.tsx
 "use client";
 import { UploadCloud } from "lucide-react";
 import React, { useRef, useState } from "react";
@@ -75,7 +75,7 @@ export function Upload() {
         ref={fileInputRef}
         onChange={onFileInputChange}
         className="hidden"
-        accept="video/mp4,video/x-m4v,video/*"
+        accept="video/mp4,video/x-m4v,video/*,.mov"
       />
 
       {/* Upload icon */}
