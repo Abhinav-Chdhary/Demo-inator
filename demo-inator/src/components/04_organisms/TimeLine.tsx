@@ -11,7 +11,7 @@ export function TimeLine() {
   const { file, clearFile } = useVideoStore((state) => state);
 
   return (
-    <div className="h-full w-full rounded-xl border border-border bg-card p-4 text-card-foreground shadow-sm">
+    <div className="h-full w-full rounded-xl bg-card p-4 text-card-foreground shadow-sm">
       Timeline
     </div>
   );

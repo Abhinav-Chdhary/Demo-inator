@@ -35,18 +35,14 @@ export function TopBar() {
   };
 
   return (
-    <div className="flex h-16 w-full items-center justify-between rounded-xl border border-border bg-card p-4 text-card-foreground shadow-sm">
+    <div className="flex h-12 w-full items-center justify-between bg-card p-4 text-card-foreground shadow-sm">
       {/* Title */}
-      <div className="text-lg font-medium">Video Editor</div>
+      <div className="text-lg font-light items-center">File | {file ? file.name : ""}</div>
 
       {/* File info & controls */}
       <div className="flex items-center gap-4">
         {/* File info */}
         <div className="flex items-center gap-2">
-          <p className="hidden max-w-xs truncate text-sm text-muted-foreground sm:block">
-            {file ? file.name : ""}
-          </p>
-
           {/* Clear file button */}
           <Button variant="outline" size="sm" onClick={clearFile}>
             {/* Icon */}
