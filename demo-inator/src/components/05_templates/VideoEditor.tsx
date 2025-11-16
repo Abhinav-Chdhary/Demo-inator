@@ -8,7 +8,7 @@ import { SideBar } from "../04_organisms/SideBar";
 
 export function VideoEditor() {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 h-screen">
       {/* Top Bar */}
       <TopBar />
 
@@ -18,7 +18,7 @@ export function VideoEditor() {
         <SideBar />
 
         {/* Video Player and TimeLine */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 w-full">
           <VideoPlayer />
 
           {/* TimeLine */}
