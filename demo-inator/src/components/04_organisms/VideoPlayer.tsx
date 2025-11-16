@@ -102,11 +102,12 @@ export function VideoPlayer() {
   return (
     <div className="flex-1 flex flex-col rounded-xl bg-card text-card-foreground shadow-sm">
       {/* Video Element */}
-      <div className="px-8 py-4" onClick={togglePlayPause}>
+      <div className="px-8 py-4 flex justify-center" onClick={togglePlayPause}>
         <video
           ref={videoRef}
           src={videoSrc}
-          className="h-full w-full object-contain"
+          className="w-full h-auto object-contain"
+          style={{ maxHeight: "75vh" }}
           onLoadedMetadata={handleLoadedMetadata}
           onTimeUpdate={handleTimeUpdate}
           onEnded={handleVideoEnd}
@@ -116,7 +117,7 @@ export function VideoPlayer() {
       </div>
 
       {/* Custom Controls Container */}
-      <div className="z-10 w-full bg-card backdrop-blur-sm">
+      <div className="z-10 w-full bg-card backdrop-blur-sm rounded-xl">
         {/* Timeline / Seek Bar */}
         <Slider
           value={[currentTime]}
@@ -127,7 +128,7 @@ export function VideoPlayer() {
         />
 
         {/* Bottom Controls */}
-        <div className="mt-2 flex items-center justify-between">
+        <div className="mt-2 flex items-center justify-between pb-2">
           {/* Center (Play/Time) */}
           <div className="flex flex-1 items-center justify-center gap-3">
             <Button
