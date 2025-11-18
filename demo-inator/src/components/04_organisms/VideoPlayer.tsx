@@ -21,8 +21,6 @@ export function VideoPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const [volume, setVolume] = useState(0.4); // 40% as in your image
-  const [isMuted, setIsMuted] = useState(false);
 
   // Effect to create/revoke object URL
   useEffect(() => {

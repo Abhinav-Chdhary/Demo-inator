@@ -1,15 +1,20 @@
 // src/components/03_compounds/SidebarMenus/Backgrounds.tsx
 import { useState } from "react";
+import { FFmpeg } from "@ffmpeg/ffmpeg";
+import { fetchFile, toBlobURL } from "@ffmpeg/util";
+// Helpers
+import { useVideoStore } from "@/lib/store";
 // Components
-import { Upload } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Define the initial list of attractive, video-friendly background colors
 const solidColors = [
-  { name: "Smoke Gray", hex: "#E5E7EB" },
-  { name: "Warm Beige", hex: "#F3F4F6" },
-  { name: "Misty Blue", hex: "#CFE2F3" },
-  { name: "Sage Green", hex: "#D7E7D9" },
-  { name: "Navy Dusk", hex: "#1F2937" },
+  { name: "Smoke Gray", hex: "#D1D5DB" },
+  { name: "Warm Beige", hex: "#E5DED7" },
+  { name: "Misty Blue", hex: "#B4CFE6" },
+  { name: "Sage Green", hex: "#BFD8CC" },
+  { name: "Navy Dusk", hex: "#111850" },
 ];
 
 // Reusable Tab Button component
@@ -26,12 +31,84 @@ const TabButton = ({ isActive, label, onClick }: any) => (
 );
 
 const Backgrounds = () => {
-  const [activeTab, setActiveTab] = useState("solid"); // 'solid' or 'images'
-  const [selectedColor, setSelectedColor] = useState(solidColors[0].hex);
+  // State to manage active tab
+  const [activeTab, setActiveTab] = useState("solid");
+
+  // State to manage selected color
+  const { file, setFile, backgroundColor, setBackgroundColor, setMetadata } =
+    useVideoStore((state) => state);
 
   // Placeholder for file input change
   const handleFileUpload = (event: any) => {
     console.log("File uploaded:", event.target.files[0]?.name);
+  };
+
+  // Function to apply a background color to video
+  const applyBackgroundToVideo = async () => {
+    if (!file) return;
+
+    setMetadata({state: "processing"});
+    const ffmpeg = ffmpegRef.current;
+
+    try {
+      // A. Load FFmpeg (only if not loaded)
+      if (!ffmpeg.loaded) {
+        // We load the core assets from a CDN (unpkg) to avoid large bundle sizes
+        const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm";
+        await ffmpeg.load({
+          coreURL: await toBlobURL(
+            `${baseURL}/ffmpeg-core.js`,
+            "text/javascript"
+          ),
+          wasmURL: await toBlobURL(
+            `${baseURL}/ffmpeg-core.wasm`,
+            "application/wasm"
+          ),
+        });
+      }
+
+      // B. Prepare Data
+      // Convert CSS Hex (#FF0000) to FFmpeg color format (0xFF0000)
+      const ffmpegColor = backgroundColor.replace("#", "0x");
+
+      // Write the current file to FFmpeg's virtual file system
+      const inputName = "input.mp4";
+      const outputName = "output.mp4";
+      await ffmpeg.writeFile(inputName, await fetchFile(file));
+
+      // C. Run FFmpeg Command
+      // -vf (Video Filter):
+      // pad=iw+20:ih+20:10:10:color=...
+      // means: new width = input width + 20, new height = input height + 20,
+      // position input at x=10, y=10, fill the rest with color.
+      await ffmpeg.exec([
+        "-i",
+        inputName,
+        "-vf",
+        `pad=iw+20:ih+20:10:10:color=${ffmpegColor}`,
+        "-c:a",
+        "copy", // Copy audio without processing (faster)
+        outputName,
+      ]);
+
+      // D. Read the result
+      const data = (await ffmpeg.readFile(outputName)) as Uint8Array;
+
+      // E. Create new File object
+      const newVideoBlob = new Blob([data.buffer], { type: "video/mp4" });
+      const newFile = new File([newVideoBlob], "edited_background.mp4", {
+        type: "video/mp4",
+      });
+
+      // F. Update Zustand Store (REPLACE the current video)
+      setFile(newFile);
+
+      console.log("Video processed successfully!");
+    } catch (error) {
+      console.error("Error processing video:", error);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -55,8 +132,9 @@ const Backgrounds = () => {
         />
       </div>
 
-      {/* Tab Content */}
+      {/* Tab content */}
       <div className="py-2">
+        {/* Colors tab */}
         {activeTab === "solid" && (
           <div className="space-y-4">
             <p className="text-sm text-white-foreground">
@@ -72,13 +150,13 @@ const Backgrounds = () => {
                     w-full aspect-square rounded-lg shadow-md cursor-pointer 
                     transition-all duration-150 ease-in-out relative
                     ${
-                      selectedColor === color.hex
+                      backgroundColor === color.hex
                         ? "ring-4 ring-blue-600 ring-offset-2"
                         : "hover:shadow-lg"
                     }
                   `}
                   style={{ backgroundColor: color.hex }}
-                  onClick={() => setSelectedColor(color.hex)}
+                  onClick={() => setBackgroundColor(color.hex)}
                   title={color.name}
                 ></div>
               ))}
@@ -91,35 +169,40 @@ const Backgrounds = () => {
                   border-2 border-dashed border-gray-300 hover:border-blue-600
                   transition-all duration-150 ease-in-out
                 `}
-                style={{
-                  backgroundColor: selectedColor ? selectedColor : "#E5E7EB",
-                }}
                 title="Choose a custom color"
               >
                 <div className="text-center text-xs font-medium text-white-foreground">
                   <span className="block mb-1 text-lg">🎨</span>
                   Custom
                 </div>
+
                 {/* Hidden input for color selection */}
                 <input
                   type="color"
                   className="w-0 h-0 opacity-0 absolute"
-                  onChange={(e) => setSelectedColor(e.target.value)}
-                  
+                  onChange={(e) => setBackgroundColor(e.target.value)}
                 />
               </label>
             </div>
 
-            {/* Display selected color (optional feedback) */}
-            <div className="mt-4 text-sm font-medium">
-              Current Color:{" "}
+            {/* Display selected color */}
+            <div className="mt-4 text-sm font-medium flex items-center">
+              Current Color:
+              {backgroundColor && (
+                <div
+                  className="w-4 h-4 rounded-full inline-block m-2"
+                  style={{ backgroundColor: backgroundColor }}
+                ></div>
+              )}
+              {/* Display hex code */}
               <span className="font-mono text-white-foreground">
-                {selectedColor}
+                {backgroundColor}
               </span>
             </div>
           </div>
         )}
 
+        {/* Images tab */}
         {activeTab === "images" && (
           <div className="space-y-4">
             <p className="text-sm text-white-foreground">
