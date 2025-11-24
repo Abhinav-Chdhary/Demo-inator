@@ -11,7 +11,7 @@ import { Slider } from "@/components/ui/slider";
 
 export function VideoPlayer() {
   // Zustand
-  const { file } = useVideoStore((state) => state);
+  const { file, backgroundColor } = useVideoStore((state) => state);
 
   // React state for player
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -100,18 +100,26 @@ export function VideoPlayer() {
   return (
     <div className="flex-1 flex flex-col rounded-xl bg-card text-card-foreground shadow-sm">
       {/* Video Element */}
-      <div className="px-8 py-4 flex justify-center" onClick={togglePlayPause}>
-        <video
-          ref={videoRef}
-          src={videoSrc}
-          className="w-full h-auto object-contain"
-          style={{ maxHeight: "75vh" }}
-          onLoadedMetadata={handleLoadedMetadata}
-          onTimeUpdate={handleTimeUpdate}
-          onEnded={handleVideoEnd}
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
-        />
+      <div className="px-8 py-4 flex justify-center flex-1 items-center overflow-hidden" onClick={togglePlayPause}>
+        <div
+          style={{
+            backgroundColor: backgroundColor || 'transparent',
+            padding: backgroundColor ? '20px' : '0',
+            display: 'inline-block', // Shrink to fit content
+            transition: 'background-color 0.2s ease',
+          }}
+        >
+          <video
+            ref={videoRef}
+            src={videoSrc}
+            className="max-h-[70vh] max-w-full object-contain"
+            onLoadedMetadata={handleLoadedMetadata}
+            onTimeUpdate={handleTimeUpdate}
+            onEnded={handleVideoEnd}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+          />
+        </div>
       </div>
 
       {/* Custom Controls Container */}

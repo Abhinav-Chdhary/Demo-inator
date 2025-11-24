@@ -1,7 +1,6 @@
 // src/components/03_compounds/SidebarMenus/Backgrounds.tsx
 import { useState, useRef } from "react";
-import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile, toBlobURL } from "@ffmpeg/util";
+
 // Helpers
 import { useVideoStore } from "@/lib/store";
 // Components
@@ -13,7 +12,6 @@ import { solidColors } from "@/components/helpers/constants";
 const Backgrounds = () => {
   // State to manage active tab
   const [activeTab, setActiveTab] = useState("solid");
-  const ffmpegRef = useRef(new FFmpeg());
 
   // State to manage selected color
   const { file, setFile, backgroundColor, setBackgroundColor, setMetadata, metadata } =
@@ -27,92 +25,9 @@ const Backgrounds = () => {
     console.log("File uploaded:", event.target.files[0]?.name);
   };
 
-  // Function to apply a background color to video
-  const applyBackgroundToVideo = async (color: string) => {
-    if (!file) return;
-
-    setMetadata({ ...metadata, state: "processing" });
-    const ffmpeg = ffmpegRef.current;
-
-    try {
-      // Add logging
-      ffmpeg.on("log", ({ message }) => {
-        console.log("FFmpeg Log:", message);
-      });
-
-      // Load FFmpeg (only if not loaded)
-      if (!ffmpeg.loaded) {
-        console.log("Loading FFmpeg...");
-        // We load the core assets from a CDN (unpkg) to avoid large bundle sizes
-        // Use UMD build to avoid ESM blob URL resolution issues
-        const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
-        await ffmpeg.load({
-          coreURL: await toBlobURL(
-            `${baseURL}/ffmpeg-core.js`,
-            "text/javascript"
-          ),
-          wasmURL: await toBlobURL(
-            `${baseURL}/ffmpeg-core.wasm`,
-            "application/wasm"
-          ),
-        });
-        console.log("FFmpeg loaded.");
-      }
-
-      // B. Prepare Data
-      // Convert CSS Hex (#FF0000) to FFmpeg color format (0xFF0000)
-      const ffmpegColor = color.replace("#", "0x");
-
-      // Get file extension and type
-      const fileExtension = file.name.split(".").pop();
-      const inputName = `input.${fileExtension}`;
-      const outputName = `output.${fileExtension}`;
-      const mimeType = file.type;
-
-      // Write the current file to FFmpeg's virtual file system
-      await ffmpeg.writeFile(inputName, await fetchFile(file));
-
-      // C. Run FFmpeg Command
-      // -vf (Video Filter):
-      // pad=iw+20:ih+20:10:10:color=...
-      // means: new width = input width + 20, new height = input height + 20,
-      // position input at x=10, y=10, fill the rest with color.
-      console.log("Starting FFmpeg processing...");
-      await ffmpeg.exec([
-        "-i",
-        inputName,
-        "-vf",
-        `pad=iw+40:ih+40:20:20:color=${ffmpegColor}`,
-        "-c:a",
-        "copy", // Copy audio without processing (faster)
-        outputName,
-      ]);
-      console.log("FFmpeg processing complete.");
-
-      // D. Read the result
-      const data = (await ffmpeg.readFile(outputName)) as Uint8Array;
-
-      // E. Create new File object
-      const newVideoBlob = new Blob([data.buffer as ArrayBuffer], { type: mimeType });
-      const newFile = new File([newVideoBlob], `edited_background.${fileExtension}`, {
-        type: mimeType,
-      });
-
-      // Update Zustand Store (REPLACE the current video)
-      setFile(newFile);
-
-      console.log("Video processed successfully!");
-    } catch (error) {
-      console.error("Error processing video:", error);
-    } finally {
-      setMetadata({ ...metadata, state: "idle" });
-    }
-  };
-
   // Function to handle color selection
   const handleColorClick = (colorHex: string) => {
     setBackgroundColor(colorHex);
-    applyBackgroundToVideo(colorHex);
   };
 
   return (

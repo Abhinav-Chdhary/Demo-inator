@@ -1,29 +1,71 @@
 // src/components/04_organisms/TopBar.tsx
 "use client";
-import { X, Download } from "lucide-react";
+import { useRef, useState } from "react";
+import { X, Download, Loader2 } from "lucide-react";
+import { FFmpeg } from "@ffmpeg/ffmpeg";
 // Helpers
 import { useVideoStore } from "@/lib/store";
+import { processVideoWithBackground } from "@/components/helpers/videoProcessor";
 // Components
 import { Button } from "@/components/ui/button";
 
 export function TopBar() {
   // Zustand
-  const { file, clearFile } = useVideoStore((state) => state);
+  const { file, clearFile, backgroundColor } = useVideoStore((state) => state);
+
+  // Local state
+  const [isProcessing, setIsProcessing] = useState(false);
+  const ffmpegRef = useRef(new FFmpeg());
 
   // Function to trigger file download
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!file) {
       console.log("No file selected to export.");
       return;
     }
 
+    // If no background color is selected, download original file
+    if (!backgroundColor) {
+      downloadFile(file);
+      return;
+    }
+
+    // If background color is selected, process with FFmpeg
+    setIsProcessing(true);
+    try {
+      const processedBlob = await processVideoWithBackground(
+        file,
+        backgroundColor,
+        ffmpegRef.current
+      );
+
+      if (processedBlob) {
+        // Create a new File object for download
+        const fileExtension = file.name.split(".").pop();
+        const newFile = new File(
+          [processedBlob],
+          `processed_${file.name}`,
+          { type: file.type }
+        );
+        downloadFile(newFile);
+      }
+    } catch (error) {
+      console.error("Export failed:", error);
+      // Ideally show a toast or error message here
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const downloadFile = (fileToDownload: File | Blob) => {
     // Create an object URL for the file
-    const url = URL.createObjectURL(file);
+    const url = URL.createObjectURL(fileToDownload);
 
     // Create a temporary anchor element
     const a = document.createElement("a");
     a.href = url;
-    a.download = file.name; // Use the original file name for the download
+    // @ts-ignore
+    a.download = fileToDownload.name || "video.mp4";
     document.body.appendChild(a); // Append the link to the body
 
     // Programmatically click the link to trigger the download
@@ -54,12 +96,18 @@ export function TopBar() {
         </div>
 
         {/* Export Button */}
-        <Button size="sm" onClick={handleExport}>
+        <Button size="sm" onClick={handleExport} disabled={isProcessing}>
           {/* Icon */}
-          <Download className="mr-0 h-4 w-4 sm:mr-2" />
+          {isProcessing ? (
+            <Loader2 className="mr-0 h-4 w-4 sm:mr-2 animate-spin" />
+          ) : (
+            <Download className="mr-0 h-4 w-4 sm:mr-2" />
+          )}
 
           {/* Text */}
-          <span className="hidden sm:inline">Export</span>
+          <span className="hidden sm:inline">
+            {isProcessing ? "Processing..." : "Export"}
+          </span>
         </Button>
       </div>
     </div>
