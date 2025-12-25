@@ -10,6 +10,7 @@ import TabButton from "@/components/02_molecules/TabButton";
 import { solidColors } from "@/components/helpers/constants";
 // BARk
 // BARK
+// BARK
 
 const Backgrounds = () => {
   // State to manage active tab
