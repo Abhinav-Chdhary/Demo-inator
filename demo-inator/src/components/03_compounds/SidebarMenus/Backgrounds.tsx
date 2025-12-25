@@ -7,7 +7,7 @@ import { useVideoStore } from "@/lib/store";
 import { Upload, Loader2 } from "lucide-react";
 import TabButton from "@/components/02_molecules/TabButton";
 // Helpers
-import { solidColors } from "@/components/helpers/constants";
+import { solidColors } from "@/components/helpers/constants"; 
 
 const Backgrounds = () => {
   // State to manage active tab
