@@ -8,9 +8,6 @@ import { Upload, Loader2 } from "lucide-react";
 import TabButton from "@/components/02_molecules/TabButton";
 // Helpers
 import { solidColors } from "@/components/helpers/constants";
-// BARk
-// BARK
-// BARK
 
 const Backgrounds = () => {
   // State to manage active tab
